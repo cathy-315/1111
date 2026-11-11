@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>藥物治療學 期中考題庫隨機測驗系統</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+      background-color: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+  <!-- 頂部導覽列 -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-white/90">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-indigo-100">
+          <i class="ph ph-pill text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg text-slate-900 leading-tight">藥物治療學 模擬測驗平台</h1>
+          <p class="text-xs text-slate-500">期中考高頻真題 ‧ 智慧不重複抽題</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btn-home-nav" onclick="goHomeWithConfirm()" class="hidden text-sm font-medium px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1.5">
+          <i class="ph ph-house"></i> 回首頁
+        </button>
+        <button onclick="openResetModal()" class="text-sm font-medium px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition flex items-center gap-1.5" title="清除答題歷史">
+          <i class="ph ph-arrow-counter-clockwise"></i> 重設進度
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center">
+
+    <!-- 1. 設定首頁 (SETUP SCREEN) -->
+    <section id="screen-setup" class="space-y-6">
+      <!-- 統計卡片 -->
+      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200/80">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 mb-2">
+              <i class="ph ph-check-circle"></i> 題庫持久記憶模式
+            </span>
+            <h2 class="text-2xl font-bold text-slate-900">總體做題進度追蹤</h2>
+            <p class="text-sm text-slate-500 mt-1">系統會自動排除您已做過的題目，優先抽取從未測驗過的盲點題！</p>
+          </div>
+          <div class="text-right">
+            <div class="text-3xl font-extrabold text-indigo-600" id="stat-percent">0%</div>
+            <div class="text-xs font-medium text-slate-400 mt-0.5">題目覆蓋率</div>
+          </div>
+        </div>
+
+        <!-- 進度條 -->
+        <div class="mt-6">
+          <div class="flex justify-between text-xs font-semibold text-slate-600 mb-2">
+            <span>有做過的題目 / 總題數</span>
+            <span id="stat-fraction">0 / 0 題</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden p-0.5 border border-slate-200/50">
+            <div id="stat-bar" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+          </div>
+          <div class="flex justify-between items-center mt-3 text-xs text-slate-500">
+            <span id="stat-unseen-text">剩餘未做：0 題</span>
+            <span id="stat-status-badge" class="font-medium text-slate-600">準備開始測驗</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 測驗模式選擇卡片 -->
+      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200/80">
+        <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <i class="ph ph-faders text-indigo-600 text-xl"></i> 選擇本次測驗題數
+        </h3>
+        <p class="text-sm text-slate-500 mb-6">從未做過的題庫中隨機抽取題目。若未做題數不足，可直接選擇「剩餘未做題」或重置重新複習。</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <!-- 30 題 -->
+          <label class="cursor-pointer relative">
+            <input type="radio" name="quiz_amount" value="30" class="peer sr-only" checked>
+            <div class="p-5 rounded-xl border-2 border-slate-200 hover:border-slate-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/50 transition flex flex-col items-center text-center">
+              <span class="text-2xl font-black text-slate-800 peer-checked:text-indigo-600">30 題</span>
+              <span class="text-xs text-slate-500 mt-1">快速重點模擬 (~25分鐘)</span>
+            </div>
+          </label>
+
+          <!-- 50 題 -->
+          <label class="cursor-pointer relative">
+            <input type="radio" name="quiz_amount" value="50" class="peer sr-only">
+            <div class="p-5 rounded-xl border-2 border-slate-200 hover:border-slate-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/50 transition flex flex-col items-center text-center">
+              <span class="text-2xl font-black text-slate-800 peer-checked:text-indigo-600">50 題</span>
+              <span class="text-xs text-slate-500 mt-1">標準期中仿真實戰 (~45分鐘)</span>
+            </div>
+          </label>
+
+          <!-- 100 題 / 剩餘所有 -->
+          <label class="cursor-pointer relative">
+            <input type="radio" name="quiz_amount" value="100" class="peer sr-only">
+            <div class="p-5 rounded-xl border-2 border-slate-200 hover:border-slate-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-50/50 transition flex flex-col items-center text-center">
+              <span class="text-2xl font-black text-slate-800 peer-checked:text-indigo-600">100 題</span>
+              <span class="text-xs text-slate-500 mt-1">高強度衝刺通刷</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100">
+          <div class="text-xs text-slate-500 flex items-center gap-1.5">
+            <i class="ph ph-info text-base text-indigo-500"></i>
+            收錄高頻考題：含肝腎器官毒性、過敏休克、疼痛階梯、酸鹼平衡、電解質、高血壓及高血脂治療準則。
+          </div>
+          <button id="btn-start-quiz" onclick="startQuiz()" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+            <span>開始測驗</span>
+            <i class="ph ph-arrow-right font-bold"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 測驗作答畫面 (QUIZ SCREEN) -->
+    <section id="screen-quiz" class="hidden space-y-5">
+      <!-- 頂部進度卡 -->
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-bold text-slate-600">
+            題號：<span id="quiz-current-idx" class="text-indigo-600 text-lg">1</span> / <span id="quiz-total-idx">30</span>
+          </span>
+          <span id="quiz-chapter-tag" class="text-xs px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 font-medium border border-indigo-100">
+            Ch 001
+          </span>
+        </div>
+        <!-- 答題小卡彈窗按鈕 -->
+        <div class="flex items-center gap-2">
+          <button onclick="toggleSheetModal()" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 flex items-center gap-1">
+            <i class="ph ph-grid-four"></i> 答題卡 (<span id="answered-count-badge">0</span>/<span id="quiz-sheet-total">30</span>)
+          </button>
+          <button onclick="confirmSubmitQuiz()" class="text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white shadow-sm flex items-center gap-1 transition">
+            <i class="ph ph-paper-plane-tilt"></i> 提早交卷
+          </button>
+        </div>
+      </div>
+
+      <!-- 題目與選項卡片 -->
+      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200/90 relative">
+        <div class="flex items-start gap-3">
+          <span class="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-sm" id="question-badge">
+            Q1
+          </span>
+          <div class="flex-1">
+            <p id="quiz-source" class="text-xs font-medium text-slate-400 mb-1">歷屆試題出處</p>
+            <h2 id="quiz-question-text" class="text-base md:text-lg font-bold text-slate-800 leading-relaxed">
+              載入中...
+            </h2>
+          </div>
+        </div>
+
+        <!-- 選項列表 -->
+        <div class="mt-6 space-y-3" id="quiz-options-container">
+          <!-- 動態由 JS 渲染 A, B, C, D -->
+        </div>
+      </div>
+
+      <!-- 下方導航按鈕 -->
+      <div class="flex items-center justify-between pt-2">
+        <button id="btn-prev-q" onclick="navigateQuiz(-1)" class="px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm transition flex items-center gap-1.5 shadow-sm">
+          <i class="ph ph-caret-left font-bold"></i> 上一題
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="btn-next-q" onclick="navigateQuiz(1)" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition flex items-center gap-1.5 shadow-md shadow-indigo-100">
+            下一題 <i class="ph ph-caret-right font-bold"></i>
+          </button>
+          <button id="btn-finish-q" onclick="confirmSubmitQuiz()" class="hidden px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm transition flex items-center gap-1.5 shadow-md shadow-emerald-100">
+            完成交卷 <i class="ph ph-check font-bold"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 測驗結果與檢討畫面 (RESULT SCREEN) -->
+    <section id="screen-result" class="hidden space-y-6">
+      <!-- 成績摘要面板 -->
+      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200 text-center relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-40 h-40 bg-indigo-50 rounded-full pointer-events-none blur-2xl"></div>
+        <div class="relative z-10">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 mb-3 shadow-inner">
+            <i class="ph ph-chart-donut text-3xl"></i>
+          </div>
+          <h2 class="text-2xl font-black text-slate-900">測驗已完成！</h2>
+          <p class="text-xs text-slate-500 mt-1">此批題目已計入您的做題紀錄</p>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto my-6">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+              <div class="text-xs text-slate-400 font-medium">總題數</div>
+              <div class="text-2xl font-extrabold text-slate-800 mt-1" id="res-total">30</div>
+            </div>
+            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+              <div class="text-xs text-emerald-600 font-medium">答對題數</div>
+              <div class="text-2xl font-extrabold text-emerald-600 mt-1" id="res-correct">0</div>
+            </div>
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-100">
+              <div class="text-xs text-rose-600 font-medium">答錯題數</div>
+              <div class="text-2xl font-extrabold text-rose-600 mt-1" id="res-wrong">0</div>
+            </div>
+            <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+              <div class="text-xs text-indigo-600 font-medium">整體正確率</div>
+              <div class="text-2xl font-extrabold text-indigo-600 mt-1" id="res-rate">0%</div>
+            </div>
+          </div>
+
+          <!-- 累積做題更新狀態 -->
+          <div class="max-w-md mx-auto p-3 rounded-xl bg-slate-100 text-xs text-slate-700 flex items-center justify-between mb-6">
+            <span>累積題庫覆蓋率：</span>
+            <span class="font-bold text-indigo-700" id="res-cumulative-text">0/0 題 (0%)</span>
+          </div>
+
+          <!-- 操作按鈕 -->
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <button onclick="continueNextQuiz()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl shadow-md shadow-indigo-100 flex items-center gap-2 transition">
+              <i class="ph ph-play"></i> 繼續測驗 (只出未做過題目)
+            </button>
+            <button onclick="goHome()" class="px-5 py-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-xl shadow-sm transition">
+              返回總覽首頁
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 錯題與答案檢討列表 -->
+      <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">答題詳情與正確答案比對</h3>
+            <p class="text-xs text-slate-400 mt-0.5">點選可過濾題目檢視自己的盲點</p>
+          </div>
+          <!-- 篩選器按鈕 -->
+          <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-semibold text-slate-600">
+            <button onclick="filterReview('all')" id="filter-all" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-indigo-600">全部 (<span id="count-rev-all">0</span>)</button>
+            <button onclick="filterReview('wrong')" id="filter-wrong" class="px-3 py-1.5 rounded-lg hover:text-slate-900">只看錯題 (<span id="count-rev-wrong">0</span>)</button>
+            <button onclick="filterReview('correct')" id="filter-correct" class="px-3 py-1.5 rounded-lg hover:text-slate-900">答對題目 (<span id="count-rev-correct">0</span>)</button>
+          </div>
+        </div>
+
+        <div id="review-list-container" class="space-y-4">
+          <!-- 動態渲染檢討卡片 -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 答題卡 Modal -->
+  <div id="modal-sheet" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
+          <i class="ph ph-list-numbers text-indigo-600 text-lg"></i> 答題卡快選
+        </h4>
+        <button onclick="toggleSheetModal()" class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center">
+          <i class="ph ph-x text-lg"></i>
+        </button>
+      </div>
+      <div class="py-4">
+        <p class="text-xs text-slate-500 mb-3 flex items-center gap-3">
+          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span> 已作答</span>
+          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-slate-100 border border-slate-300 inline-block"></span> 未作答</span>
+          <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full ring-2 ring-indigo-500 bg-white inline-block"></span> 當前題</span>
+        </p>
+        <div id="sheet-grid" class="grid grid-cols-5 sm:grid-cols-6 gap-2 max-h-64 overflow-y-auto custom-scrollbar p-1">
+          <!-- 題目方格 -->
+        </div>
+      </div>
+      <div class="pt-3 border-t border-slate-100 flex justify-end">
+        <button onclick="toggleSheetModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">
+          關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 重設紀錄確認 Modal -->
+  <div id="modal-reset" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center">
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3 text-2xl">
+        <i class="ph ph-warning"></i>
+      </div>
+      <h4 class="font-bold text-slate-900 text-base mb-1">確定要重設做題進度嗎？</h4>
+      <p class="text-xs text-slate-500 mb-5">此操作將清除您所有歷史做題紀錄與覆蓋率（%），所有題目將重新視為「未做過」。</p>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="closeResetModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold">取消</button>
+        <button onclick="executeResetHistory()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold">確定重設</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用訊息提示 Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2">
+    <i class="ph ph-info text-base text-indigo-400"></i>
+    <span id="toast-text">訊息提示</span>
+  </div>
+
+  <!-- 頁尾 -->
+  <footer class="py-4 border-t border-slate-200 text-center text-xs text-slate-400 bg-white">
+    藥物治療學期中考題庫隨機測驗系統 ‧ 專技高考藥師試題精華
+  </footer>
+
+  <script>
+    // ==========================================
+    // 1. 題庫資料 (從文件精密收錄各章節經典原題與正式答案)
+    // ==========================================
+    const QUESTION_BANK = [
+      {
+        id: "Q1",
+        chapter: "Ch 001 Assessment of Therapy",
+        source: "112年第1次P5 藥物治療學",
+        question: "下列何者為最常表現藥品不良反應之器官？",
+        options: {
+          A: "肝臟",
+          B: "腎臟",
+          C: "皮膚",
+          D: "肺臟"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q2",
+        chapter: "Ch 034 Kidney and Liver Transplantation",
+        source: "115年第1次P5 藥物治療學",
+        question: "下列何者在臨床上不會常規進行TDM？",
+        options: {
+          A: "cyclosporine",
+          B: "everolimus",
+          C: "mycophenolate mofetil",
+          D: "sirolimus"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q3",
+        chapter: "Ch 002 Clinical Laboratory Tests",
+        source: "114年第2次P5 藥物治療學",
+        question: "陳小姐入院治療，檢驗數值如下：Na 138 mEq/L、K 2.5 mEq/L、Cl 92 mEq/L、pH 7.49、PaCO2 46 mmHg、HCO3- 34 mEq/L、Urine Cl 8 mEq/L，下列治療何者最不適當？",
+        options: {
+          A: "acetazolamide",
+          B: "furosemide",
+          C: "potassium chloride",
+          D: "sodium chloride"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q4",
+        chapter: "Ch 002 Clinical Laboratory Tests",
+        source: "113年第1次P5 藥物治療學",
+        question: "下列何者使用時，最不需要進行TDM？",
+        options: {
+          A: "flucytosine",
+          B: "fluconazole",
+          C: "voriconazole",
+          D: "posaconazole"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q5",
+        chapter: "Ch 002 Clinical Laboratory Tests",
+        source: "113年第1次P5 藥物治療學",
+        question: "使用具肝毒性的藥品時，須監測的症狀不包括下列何者？",
+        options: {
+          A: "anorexia",
+          B: "euphoria",
+          C: "fatigue",
+          D: "malaise"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q6",
+        chapter: "Ch 092 Hematologic Malignancies",
+        source: "113年第1次P5 藥物治療學",
+        question: "李女士，27歲，近1個月反覆發燒、常覺得虛弱、易流鼻血，抽血檢驗值：WBC 72,300 cells/µL、leukemic blast 42%、platelet 18,000 cells/µL，Hb 7.4 g/dL；骨髓抹片診斷為AML，下列敘述何者正確？",
+        options: {
+          A: "AML為成人最常見之急性白血病，其中又以帶有第15及第17對染色體轉位突變的預後最差",
+          B: "AML帶有許多基因突變，皆影響其預後，例如：NPM1、FLT3-ITD皆為不佳的基因突變",
+          C: "因AML極難完全治癒，所有AML的病人皆應接受血液幹細胞移植",
+          D: "第一線治療以化學治療為主，常見處方為「7+3」的處方，包含cytarabine及anthracycline"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q7",
+        chapter: "Ch 002 Clinical Laboratory Tests",
+        source: "113年第2次P5 藥物治療學",
+        question: "Drug-induced liver injury (DILI)可依據檢驗數值區分為不同型態，下列敘述何者錯誤？",
+        options: {
+          A: "型態可分為hepatocellular、cholestatic與mixed三種",
+          B: "可使用R值區分不同型態，R值=ALT/ALP",
+          C: "若R值>5，代表是hepatocellular injury",
+          D: "若R值<2，代表是cholestatic disease"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q8",
+        chapter: "Ch 002 Clinical Laboratory Tests",
+        source: "112年第1次P5 藥物治療學",
+        question: "下列何種型態之藥品肝傷害較其他類型又急又猛？",
+        options: {
+          A: "肝細胞型 (hepatocellular injury)",
+          B: "膽汁鬱積型 (cholestatic injury)",
+          C: "非酒精性脂肪性肝炎 (nonalcoholic steatohepatitis)",
+          D: "混和型"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q9",
+        chapter: "Ch 002 Clinical Laboratory Tests",
+        source: "112年第2次P5 藥物治療學",
+        question: "急性肝衰竭時，下列何者為早期預測肝功能的最佳指標？",
+        options: {
+          A: "serum bilirubin",
+          B: "alanine aminotransferase(ALT)/aspartate aminotransferase(AST)",
+          C: "prothrombin time (PT/INR)",
+          D: "serum proteins (albumin or transferrin)"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q10",
+        chapter: "Ch 002 Clinical Laboratory Tests",
+        source: "111年第2次P5 藥物治療學",
+        question: "下列敘述何者不是膽汁鬱積型肝傷害 (cholestatic injury) 之特徵？",
+        options: {
+          A: "符合Hy's Law的定義",
+          B: "ALT 33 U/L; total bilirubin 3.2 mg/dL; alkaline phosphatase 400 U/L",
+          C: "較常見於60歲以上",
+          D: "erythromycin引起的肝傷害屬此類型"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q11",
+        chapter: "Ch 044 Rheumatoid Arthritis",
+        source: "111年第2次P5 藥物治療學",
+        question: "張女士33歲，有類風濕性關節炎。下列檢驗值中，那些可用於評估其疾病變化及藥品療效？(1)AFP (2)CEA (3)CRP (4)ESR",
+        options: {
+          A: "1, 2",
+          B: "1, 4",
+          C: "2, 3",
+          D: "3, 4"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q12",
+        chapter: "Ch 003 Anaphylaxis and Drug Allergies",
+        source: "114年第1次P5 藥物治療學",
+        question: "一位right coronary artery occlusion導致AMI之病人，併發3rd degree AV block，HR 50 beats/min，BP 85/40 mmHg，尿量減少。下列何者是最後線的用藥？",
+        options: {
+          A: "atropine 0.5 mg IV every 3 minutes, up to 3 mg total dose",
+          B: "isoproterenol 10 mcg/min continuous IV infusion",
+          C: "dopamine 2 mcg/min continuous IV infusion",
+          D: "epinephrine 2 mcg/min continuous IV infusion"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q13",
+        chapter: "Ch 003 Anaphylaxis and Drug Allergies",
+        source: "114年第1次P5 藥物治療學",
+        question: "張小姐完成AC後，預計以taxane繼續治療；如想在兩種治療中選擇：1.paclitaxel IF QWx12；2.docetaxel IF Q3Wx4，下列敘述何者正確？",
+        options: {
+          A: "docetaxel可能造成fluid retention，因此輔助用藥須包含furosemide以預防",
+          B: "paclitaxel由肝代謝，docetaxel由腎代謝，因此可依病人肝腎功能做決定",
+          C: "paclitaxel可能造成周邊神經毒性與過敏反應",
+          D: "兩者都屬中致吐性藥品"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q14",
+        chapter: "Ch 003 Anaphylaxis and Drug Allergies",
+        source: "113年第1次P5 藥物治療學",
+        question: "57歲女性，過去曾因penicillin產生過敏性休克。因發燒、頻尿、排尿困難、腰痛，診斷有acute complicated urinary infection，下列何者不可作為empirical antibiotic therapy？",
+        options: {
+          A: "norfloxacin",
+          B: "moxifloxacin",
+          C: "ciprofloxacin",
+          D: "levofloxacin"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q15",
+        chapter: "Ch 022 Shock",
+        source: "113年第2次P5 藥物治療學",
+        question: "38歲男性，有HIV感染病史，曾因penicillin引發anaphylactic shock。因發燒住院，血液培養初步報告為 G(-) bacilli。下列何種antibiotic治療選擇最適當？",
+        options: {
+          A: "sulfamethoxazole/trimethoprim",
+          B: "cefepime",
+          C: "piperacillin/tazobactam",
+          D: "ciprofloxacin"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q16",
+        chapter: "Ch 003 Anaphylaxis and Drug Allergies",
+        source: "113年第2次P5 藥物治療學",
+        question: "有關鐵劑之使用，下列敘述何者正確？",
+        options: {
+          A: "口服鐵劑應於飯後立即服用，因為食物能幫助其吸收",
+          B: "famotidine會增加口服鐵劑的吸收",
+          C: "iron injection可能會造成過敏反應",
+          D: "iron dextran injection的效果優於iron sucrose injection"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q17",
+        chapter: "Ch 045 Gout and Hyperuricemia",
+        source: "111年第1次P5 藥物治療學",
+        question: "下列何者為引發allopurinol過敏反應之危險因子？(1)起始劑量過高 (2)腎功能不全 (3)HLA-B*5801 positive (4)肝功能不全 (5)漢人及泰國人 (6)糖尿病病人",
+        options: {
+          A: "1, 2, 4, 6",
+          B: "2, 3, 4, 5",
+          C: "3, 4, 5, 6",
+          D: "1, 2, 3, 5"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q18",
+        chapter: "Ch 022 Shock",
+        source: "111年第2次P5 藥物治療學",
+        question: "58歲李先生的糖尿病控制不佳，醫師懷疑因Pseudomonas aeruginosa導致足部感染，若已知penicillin類會造成他anaphylactic shock，則應使用下列何種抗生素治療？",
+        options: {
+          A: "ceftriaxone",
+          B: "cefepime",
+          C: "levofloxacin",
+          D: "moxifloxacin"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q19",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "115年第1次P5 藥物治療學",
+        question: "董先生80歲，診斷有前列腺癌第四期，併發多處骨轉移。因為骨轉移部位疼痛，4天前開始口服morphine 10 mg QID。董先生女兒發現他服用morphine以後開始白天嗜睡，疼痛程度0~1分。有關董先生疼痛之敘述，下列何者正確？",
+        options: {
+          A: "急性疼痛 + 神經病變型(neuropathic)疼痛",
+          B: "急性疼痛 + 疼痛受器型(nociceptive)疼痛",
+          C: "慢性疼痛 + 神經病變型(neuropathic)疼痛",
+          D: "慢性疼痛 + 疼痛受器型(nociceptive)疼痛"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q20",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "115年第1次P5 藥物治療學",
+        question: "承上題，董先生嗜睡問題經確認與morphine過量有關，下列敘述何者最適當？",
+        options: {
+          A: "立即停藥，改用ibuprofen 400 mg PO QID",
+          B: "立即將morphine 10 mg PO QID改為Q6H (降低頻率或減量)",
+          C: "此嗜睡問題將不會在持續服用後減輕",
+          D: "morphine的止痛作用主要來自於代謝物morphine-3-glucuronide"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q21",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "115年第2次P5 藥物治療學",
+        question: "有關cholangitis的敘述，下列何者錯誤？",
+        options: {
+          A: "發燒、黃疸、左上腹部疼痛是常見的臨床症狀",
+          B: "Pseudomonas aeruginosa是致病菌之一",
+          C: "相較於cholecystitis，cholangitis更容易引起菌血症",
+          D: "處理cholangitis時，應先抽血做血液培養，再給予經驗性抗生素治療"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q22",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "115年第2次P5 藥物治療學",
+        question: "乳癌病人反應背痛問題，疼痛分數為5分，經檢查有骨轉移，過去未曾使用過opioid，若欲使用，下列建議何者正確？",
+        options: {
+          A: "選擇codeine，因可避免opioid的副作用",
+          B: "疼痛時再服藥，可減少opioid的副作用",
+          C: "併用瀉劑來預防opioid便秘的副作用",
+          D: "選擇fentanyl transdermal patch，較方便使用"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q23",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "114年第2次P5 藥物治療學",
+        question: "有關transdermal fentanyl patch的使用，下列何者正確？",
+        options: {
+          A: "初次使用貼片，貼上後2小時內可到達最低有效血中濃度",
+          B: "體溫上升可能造成藥品釋出加快，增加副作用的風險",
+          C: "transdermal fentanyl 25 mcg/hr 可替換注射morphine 60 mg/day",
+          D: "貼片移除後須等12小時再貼下一片，避免藥品累積"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q24",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "114年第2次P5 藥物治療學",
+        question: "下列何者不是narcotic analgesics常見的副作用？",
+        options: {
+          A: "呼吸抑制",
+          B: "腹瀉",
+          C: "噁心、嘔吐",
+          D: "嗜睡"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q25",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "113年第1次P5 藥物治療學",
+        question: "有關narcotic analgesics之敘述，下列何者正確？",
+        options: {
+          A: "codeine適用於重度疼痛",
+          B: "morphine適用於輕度疼痛",
+          C: "oxycodone適用於中重度疼痛",
+          D: "tramadol每日劑量沒有上限"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q26",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "113年第1次P5 藥物治療學",
+        question: "有關疼痛之處置，下列何者正確？",
+        options: {
+          A: "acute cancer pain crisis應視為急症，須以morphine或等效narcotic analgesics處置",
+          B: "acute cancer pain crisis應視為急症，須立即依WHO止痛三階段開始使用non-opioid類止痛劑治療",
+          C: "non-cancer chronic pain應優先以narcotic analgesics治療，且應使用長效劑型以達長時間控制",
+          D: "chronic cancer pain長期使用opioid者，考慮副作用以及成癮性，可以opioid agonist-antagonist 如 buprenorphine作為突破性疼痛治療"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q27",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "113年第2次P5 藥物治療學",
+        question: "有關neuropathic pain治療藥品的敘述，下列何者正確？",
+        options: {
+          A: "duloxetine由於是CYP3A4 substrate，須注意交互作用",
+          B: "duloxetine由腎臟代謝，肝硬化病人可使用",
+          C: "使用gabapentin時，逐漸調增劑量，可減緩嗜睡等副作用",
+          D: "外用lidocaine貼片對於post herpetic neuralgia效果有限，不建議使用"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q28",
+        chapter: "Ch 027 Upper GI Disorders",
+        source: "112年第1次P5 藥物治療學",
+        question: "李太太69歲，因骨性關節炎長期使用NSAID造成胃潰瘍；潰瘍痊癒後，仍須使用止痛劑。下列治療中，何者最無法防止胃潰瘍復發？",
+        options: {
+          A: "famotidine 20 mg BID + naproxen 250 mg TID",
+          B: "rabeprazole 20 mg QD + celecoxib 200 mg QD",
+          C: "nizatidine 150 mg BID + celecoxib 200 mg QD",
+          D: "pantoprazole 40 mg QD + diclofenac 100 mg BID"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q29",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "111年第2次P5 藥物治療學",
+        question: "下列何者與長期使用morphine IM/IV 30 mg有相等的止痛劑量 (equianalgesic dose)？",
+        options: {
+          A: "morphine PO 30 mg",
+          B: "oxycodone PO 45 mg",
+          C: "hydromorphone PO 10 mg",
+          D: "fentanyl buccal film 200 µg"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q30",
+        chapter: "Ch 007 Pain and Its Management",
+        source: "111年第1次P5 藥物治療學",
+        question: "下列何者為癌症病人突破性疼痛 (breakthrough pain)？",
+        options: {
+          A: "過去沒有疼痛抱怨，這二天突然有疼痛發生",
+          B: "持續定時使用鴉片類止痛劑，仍有持續性疼痛",
+          C: "持續定時使用NSAIDs，仍有持續性疼痛",
+          D: "持續定時使用鴉片類止痛劑，因活動而有短暫強烈疼痛"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q31",
+        chapter: "Ch 004 / Toxicology",
+        source: "115年第1次P5 藥物治療學",
+        question: "有關anticoagulants與其reversal agent的配對，下列何者錯誤？",
+        options: {
+          A: "heparin - protamine",
+          B: "dabigatran - idarucizumab",
+          C: "rivaroxaban - idarucizumab",
+          D: "warfarin - vitamin K"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q32",
+        chapter: "Ch 004 / Toxicology",
+        source: "112年第2次P5 藥物治療學",
+        question: "下列何者會抑制monoamine oxidase，若與sertraline併用，可能引起serotonin syndrome？",
+        options: {
+          A: "linezolid",
+          B: "vancomycin",
+          C: "meropenem",
+          D: "colistin"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q33",
+        chapter: "Ch 004 / Toxicology",
+        source: "106年第1次P5 藥物治療學",
+        question: "下列何者可用於緩解serotonin syndrome？",
+        options: {
+          A: "cyproheptadine",
+          B: "naloxone",
+          C: "flumazenil",
+          D: "deferoxamine"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q34",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "115年第1次P5 藥物治療學",
+        question: "有關急性胰臟炎的敘述，下列何者最不適當？",
+        options: {
+          A: "ERCP後發生的急性胰臟炎，可用口服indomethacin預防",
+          B: "hypocalcemia是預後不佳的指標",
+          C: "積極fluid resuscitation可使用crystalloids，如lactated Ringer's solution",
+          D: "壞死性胰臟炎若初始治療未改善，可使用廣效抗生素治療"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q35",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "115年第1次P5 藥物治療學",
+        question: "有關低血鉀之敘述，下列何者正確？(1)可能導致心律不整 (2)輕微低血鉀時(3~4 mEq/L)口服補充優先於靜脈注射 (3)應快速輸注含鉀溶液提升血鉀 (4)spironolactone可能引起低血鉀",
+        options: {
+          A: "1, 2",
+          B: "1, 3",
+          C: "2, 3",
+          D: "2, 4"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q36",
+        chapter: "Ch 009 Acid-Base Disorders",
+        source: "115年第1次P5 藥物治療學",
+        question: "下列何者最不可能造成代謝性酸中毒？",
+        options: {
+          A: "敗血性休克",
+          B: "急性腎衰竭",
+          C: "糖尿病酮酸血症",
+          D: "過度換氣症候群"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q37",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "115年第2次P5 藥物治療學",
+        question: "Hypokalemia對digoxin治療結果，下列何項敘述正確？",
+        options: {
+          A: "降低療效",
+          B: "增加digoxin血中濃度",
+          C: "增加毒性",
+          D: "沒有影響"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q38",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "115年第2次P5 藥物治療學",
+        question: "有關hypercalcemia的敘述，下列何者錯誤？",
+        options: {
+          A: "全血鈣須依據serum albumin校正。serum albumin偏高時，hypocalcemia可能是假象",
+          B: "malignancy與hyperparathyroidism是最常引起hypercalcemia的原因",
+          C: "常見症狀為疲倦、多尿與脫水",
+          D: "一般病人緊急排鈣的第一線治療為大量hydration與diuresis"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q39",
+        chapter: "Ch 009 Acid-Base Disorders",
+        source: "115年第2次P5 藥物治療學",
+        question: "下列何者最不容易造成呼吸性酸中毒？",
+        options: {
+          A: "metformin",
+          B: "midazolam",
+          C: "morphine",
+          D: "phenobarbital"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q40",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "115年第2次P5 藥物治療學",
+        question: "下列口服藥之吸收，何者最可能受到鈣離子影響？",
+        options: {
+          A: "valsartan",
+          B: "alendronate",
+          C: "lorazepam",
+          D: "raloxifene"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q41",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "114年第1次P5 藥物治療學",
+        question: "下列治療hyperkalemia的方法，何者可以真正降低體內「鉀的總量」？",
+        options: {
+          A: "calcium gluconate",
+          B: "insulin and glucose",
+          C: "NaHCO3",
+          D: "sodium polystyrene sulfonate"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q42",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "114年第1次P5 藥物治療學",
+        question: "針對ESRD引起之mineral-bone disorder治療的敘述，下列何者正確？",
+        options: {
+          A: "aluminum hydroxide是hypercalcemia合併hyperphosphatemia首選",
+          B: "cinacalcet開始治療前要監測血鈣",
+          C: "calcium carbonate會增加aluminum吸收，應避免作為phosphate binder",
+          D: "calcitriol會促進腸胃道鈣磷的排除，改善hyperphosphatemia"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q43",
+        chapter: "Ch 009 Acid-Base Disorders",
+        source: "114年第1次P5 藥物治療學",
+        question: "代謝性酸中毒，HCO3- = 16 mEq/L，呼吸代償後的PaCO2應最接近下列何者？",
+        options: {
+          A: "24 mmHg",
+          B: "30 mmHg",
+          C: "36 mmHg",
+          D: "42 mmHg"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q44",
+        chapter: "Ch 009 Acid-Base Disorders",
+        source: "114年第1次P5 藥物治療學",
+        question: "陳先生因敗血性休克入住加護病房，ABG分析為pH/PCO2/HCO3- = 7.25/30/16，血液檢查：Na+ 140 mmol/L，Cl- 100 mmol/L，其陰離子間隙(anion gap)為何？",
+        options: {
+          A: "0",
+          B: "10",
+          C: "24",
+          D: "40"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q45",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "114年第2次P5 藥物治療學",
+        question: "有關hypokalemia的敘述，下列何者錯誤？",
+        options: {
+          A: "會導致心律不整而危及生命",
+          B: "常發生在使用amphotericin B的病人",
+          C: "一般針劑補充優先於口服",
+          D: "使用針劑補充，應緩慢輸注，一般不超過 10 mEq/hour"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q46",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "113年第2次P5 藥物治療學",
+        question: "下列何者最可能導致高血鉀？",
+        options: {
+          A: "bosentan",
+          B: "aprepitant",
+          C: "candesartan",
+          D: "sumatriptan"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q47",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "112年第1次P5 藥物治療學",
+        question: "下列何者為 dihydropyridine calcium channel blocker？",
+        options: {
+          A: "fosinopril",
+          B: "felodipine",
+          C: "verapamil",
+          D: "diltiazem"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q48",
+        chapter: "Ch 009 Acid-Base Disorders",
+        source: "112年第1次P5 藥物治療學",
+        question: "使用trisodium citrate做為血液透析時的抗凝血劑，可能發生下列何種不良反應？(1)hyponatremia (2)hypocalcemia (3)metabolic acidosis (4)metabolic alkalosis",
+        options: {
+          A: "1, 3",
+          B: "2, 3",
+          C: "1, 4",
+          D: "2, 4"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q49",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "112年第2次P5 藥物治療學",
+        question: "下列何者可造成低血鉀症？",
+        options: {
+          A: "trandolapril",
+          B: "torsemide",
+          C: "eplerenone",
+          D: "aliskiren"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q50",
+        chapter: "Ch 010 Fluid and Electrolyte Disorders",
+        source: "112年第2次P5 藥物治療學",
+        question: "關於hyperkalemia的敘述，下列何者錯誤？",
+        options: {
+          A: "可能導致心律不整而致死",
+          B: "應儘速給與calcium gluconate來降低血鉀濃度",
+          C: "captopril常造成hyperkalemia",
+          D: "常發生於rhabdomyolysis"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q51",
+        chapter: "Ch 012 Anemias",
+        source: "115年第2次P5 藥物治療學",
+        question: "有關nitrofurantoin的敘述，下列何者正確？",
+        options: {
+          A: "是急性腎盂腎炎的治療首選之一",
+          B: "oral bioavailability很差，需要IV injection",
+          C: "對Proteus mirabilis效果很好，但>40% E. coli對其具抗藥性",
+          D: "禁止用在G6PD-deficient新生兒，可能會造成hemolytic anemia"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q52",
+        chapter: "Ch 012 Anemias",
+        source: "115年第2次P5 藥物治療學",
+        question: "下列erythropoiesis-stimulating agents皮下注射劑型之半衰期由短至長排列的順序，何者正確？(1)epoetin alfa (2)darbepoetin alfa (3)methoxy PEG-epoetin beta",
+        options: {
+          A: "1 -> 2 -> 3",
+          B: "3 -> 2 -> 1",
+          C: "2 -> 1 -> 3",
+          D: "2 -> 3 -> 1"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q53",
+        chapter: "Ch 012 Anemias",
+        source: "114年第2次P5 藥物治療學",
+        question: "王小姐有酒癮及藥癮，因嚴重孕吐而求診，Hgb 7.2 g/dL、Hct 25%、MCV 118 µm3、MCH 36pg。其貧血最可能與缺乏下列何者有關？",
+        options: {
+          A: "erythropoietin",
+          B: "folic acid",
+          C: "cyanocobalamin",
+          D: "haptoglobin"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q54",
+        chapter: "Ch 012 Anemias",
+        source: "114年第2次P5 藥物治療學",
+        question: "承上題，若王小姐缺乏葉酸且沒有接受適當的貧血治療，其胎兒可能發生何種問題？",
+        options: {
+          A: "pernicious anemia",
+          B: "hemolytic anemia",
+          C: "phocomelia",
+          D: "neural tube defects"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q55",
+        chapter: "Ch 012 Anemias",
+        source: "113年第1次P5 藥物治療學",
+        question: "口服鐵劑應避免與下列那些藥品併服？(1)MgO (2)aspirin (3)doxycycline (4)clopidogrel",
+        options: {
+          A: "1, 2",
+          B: "1, 3",
+          C: "2, 3",
+          D: "2, 4"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q56",
+        chapter: "Ch 012 Anemias",
+        source: "113年第1次P5 藥物治療學",
+        question: "下列那些藥品可能造成巨紅血球性貧血 (megaloblastic anemia)？(1)methotrexate (2)trimethoprim (3)ciprofloxacin",
+        options: {
+          A: "僅 1, 2",
+          B: "僅 2, 3",
+          C: "僅 1, 3",
+          D: "1, 2, 3"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q57",
+        chapter: "Ch 012 Anemias",
+        source: "112年第1次P5 藥物治療學",
+        question: "王小姐31歲剛生完小孩，常頭暈虛弱，Hgb 7.6 g/dL、MCV 75 µm3、MCH 20 pg、serum iron 40 µg/dL、ferritin 9 µg/mL。王小姐可能有下列何種類型貧血？",
+        options: {
+          A: "macrocytic and hypochromic anemia",
+          B: "microcytic and hyperchromic anemia",
+          C: "microcytic and hypochromic anemia",
+          D: "macrocytic and hyperchromic anemia"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q58",
+        chapter: "Ch 012 Anemias",
+        source: "112年第1次P5 藥物治療學",
+        question: "缺鐵性貧血若醫師決定處方口服鐵劑，下列何者最適當？",
+        options: {
+          A: "ferrous sulfate",
+          B: "ferric sulfate",
+          C: "carbonyl iron",
+          D: "iron dextran"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q59",
+        chapter: "Ch 012 Anemias",
+        source: "112年第1次P5 藥物治療學",
+        question: "下列何者最有助於鐵劑之吸收？",
+        options: {
+          A: "使用鐵劑長效錠",
+          B: "使用liposomal formulation",
+          C: "併用vitamin C 25 mg",
+          D: "併用vitamin C 500 mg"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q60",
+        chapter: "Ch 013 Dyslipidemias and CHD",
+        source: "115年第1次P5 藥物治療學",
+        question: "下列何者能降低low-density lipoprotein (LDL-C)超過50% (High-intensity statin)？",
+        options: {
+          A: "rosuvastatin 20 mg",
+          B: "atorvastatin 10 mg",
+          C: "pitavastatin 2 mg",
+          D: "simvastatin 20 mg"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q61",
+        chapter: "Ch 013 Dyslipidemias and CHD",
+        source: "115年第2次P5 藥物治療學",
+        question: "有關statin類藥品的副作用，下列敘述何者最不適當？",
+        options: {
+          A: "statin類藥品可能會增加new-onset diabetes的風險",
+          B: "statin類藥品的副作用較易發生於年長族群",
+          C: "statin可能造成ALT輕微的上升",
+          D: "若須併用fibrates，應優先選擇gemfibrozil"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q62",
+        chapter: "Ch 013 Dyslipidemias and CHD",
+        source: "115年第2次P5 藥物治療學",
+        question: "一般而言，除非病人對藥品耐受性不佳或有triglyceride > 500 mg/dL的問題，則第一線的lipid lowering therapy選擇是那一類藥品？",
+        options: {
+          A: "statins",
+          B: "fibrates",
+          C: "PCSK9 inhibitors",
+          D: "niacin"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q63",
+        chapter: "Ch 013 Dyslipidemias and CHD",
+        source: "115年第2次P5 藥物治療學",
+        question: "針對lipid lowering therapy的敘述，下列何者最適當？",
+        options: {
+          A: "niacin常見的副作用是flushing",
+          B: "evolocumab QD PO降低LDL-C的效果優於rosuvastatin QD PO",
+          C: "ezetimibe促進肝臟排除脂肪",
+          D: "fluvastatin主要透過CYP3A4代謝"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q64",
+        chapter: "Ch 013 Dyslipidemias and CHD",
+        source: "114年第1次P5 藥物治療學",
+        question: "60歲男性，具有hypertension與myocardial infarction病史，肝腎功能正常，血脂檢查：total cholesterol 204 mg/dL、LDL-C 140 mg/dL、TG 91 mg/dL。下列何者是適當的lipid lowering therapy？",
+        options: {
+          A: "fenofibrate 160 mg",
+          B: "ezetimibe 10 mg",
+          C: "atorvastatin 40 mg",
+          D: "simvastatin 10 mg"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q65",
+        chapter: "Ch 013 Dyslipidemias and CHD",
+        source: "114年第2次P5 藥物治療學",
+        question: "有關statin可能引起肌肉相關副作用的敘述，下列何者正確？(1)老年人較年輕人容易發生 (2)不需因肌肉痛或CK升高而停用statin (3)併用simvastatin與amiodarone可能增加發生的風險 (4)所有使用statin的病人都應該定期測量CK",
+        options: {
+          A: "1, 2",
+          B: "1, 3",
+          C: "2, 4",
+          D: "3, 4"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q66",
+        chapter: "Ch 013 Dyslipidemias and CHD",
+        source: "113年第1次P5 藥物治療學",
+        question: "關於lipid lowering therapies與機轉的配對，下列何者正確？",
+        options: {
+          A: "atorvastatin: PCSK9 inhibitor",
+          B: "ezetimibe: cholesterol absorption inhibitor",
+          C: "gemfibrozil: HMG-CoA reductase inhibitor",
+          D: "niacin: omega-3 polyunsaturated fatty acid"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q67",
+        chapter: "Ch 013 Dyslipidemias and CHD",
+        source: "111年第1次P5 藥物治療學",
+        question: "短效的statins類降血脂藥品最好於何時服用，以保有最佳療效？",
+        options: {
+          A: "餐前",
+          B: "餐後",
+          C: "清晨",
+          D: "晚間睡前"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q68",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "115年第1次P5 藥物治療學",
+        question: "關先生68歲，有高血壓，1年前曾因缺血性中風而住院。下列何者單獨使用可做為高血壓治療之第一線用藥？",
+        options: {
+          A: "indapamide",
+          B: "irbesartan",
+          C: "isradipine",
+          D: "ipratropium"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q69",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "115年第1次P5 藥物治療學",
+        question: "降血壓藥之用法用量，下列何者最適當？",
+        options: {
+          A: "hydrochlorothiazide: 25 mg TID",
+          B: "valsartan: 80 mg QD",
+          C: "amlodipine: 5 mg QID",
+          D: "fosinopril: 20 mg TID"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q70",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "115年第2次P5 藥物治療學",
+        question: "有關合併症與高血壓治療首選的配對，下列何者錯誤？",
+        options: {
+          A: "CAD - prazosin",
+          B: "DM - losartan",
+          C: "PSVT - verapamil",
+          D: "PAD - amlodipine"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q71",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "115年第2次P5 藥物治療學",
+        question: "張先生高血壓病史5年，以atenolol 100 mg QD控制。2天前因高血壓急症入院，下列近期用藥中，那些最可能造成血壓升高？(1)cetirizine (2)ambroxol (3)pseudoephedrine (4)prednisolone (5)dextromethorphan (6)simethicone",
+        options: {
+          A: "3, 4",
+          B: "5, 6",
+          C: "4, 5",
+          D: "1, 2"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q72",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "114年第1次P5 藥物治療學",
+        question: "下列何者最適合用於治療懷孕婦女之高血壓？",
+        options: {
+          A: "lisinopril",
+          B: "olmesartan",
+          C: "aliskiren",
+          D: "methyldopa"
+        },
+        answer: "D"
+      },
+      {
+        id: "Q73",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "114年第2次P5 藥物治療學",
+        question: "下列何者最不適合用於治療stable ischemic heart disease病人合併之高血壓？",
+        options: {
+          A: "metoprolol",
+          B: "carvedilol",
+          C: "pindolol (具有ISA活性)",
+          D: "nebivolol"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q74",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "114年第2次P5 藥物治療學",
+        question: "劉太太有gout病史，最近被診斷hypertension，下列何項藥品最可能增加其blood uric acid濃度？",
+        options: {
+          A: "amiloride",
+          B: "triamterene",
+          C: "hydrochlorothiazide",
+          D: "spironolactone"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q75",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "113年第1次P5 藥物治療學",
+        question: "下列何者不會造成次發性高血壓？",
+        options: {
+          A: "licorice",
+          B: "pseudoephedrine",
+          C: "eplerenone",
+          D: "venlafaxine"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q76",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "113年第2次P5 藥物治療學",
+        question: "柯先生同時有hypertension與left ventricular dysfunction，下列何種藥品組合為最適當的選擇？",
+        options: {
+          A: "ramipril + bisoprolol + spironolactone",
+          B: "minoxidil + metoprolol + spironolactone",
+          C: "captopril + atenolol + furosemide",
+          D: "quinapril + betaxolol + furosemide"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q77",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "111年第1次P5 藥物治療學",
+        question: "下列何者為 cardioselective β-blocker (β1 selective)？",
+        options: {
+          A: "carvedilol",
+          B: "labetalol",
+          C: "metoprolol",
+          D: "timolol"
+        },
+        answer: "C"
+      },
+      {
+        id: "Q78",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "111年第1次P5 藥物治療學",
+        question: "為避免contrast media引發急性腎小管壞死，高危險病人在投與前一天須停用下列藥品，但何者除外？",
+        options: {
+          A: "NSAIDs",
+          B: "calcium channel blocker",
+          C: "ACE inhibitors",
+          D: "metformin"
+        },
+        answer: "B"
+      },
+      {
+        id: "Q79",
+        chapter: "Ch 020 Cardiac Arrhythmias",
+        source: "111年第2次P5 藥物治療學",
+        question: "60歲男性，有心房纖維顫動(atrial fibrillation)、高血壓與缺血性中風病史，肝腎功能正常。病人的CHA2DS2-VASc分數為：",
+        options: {
+          A: "3 (年齡60: 0分, HTN: 1分, Stroke: 2分)",
+          B: "4",
+          C: "5",
+          D: "6"
+        },
+        answer: "A"
+      },
+      {
+        id: "Q80",
+        chapter: "Ch 014 Essential Hypertension",
+        source: "111年第2次P5 藥物治療學",
+        question: "50歲非裔美國人因高血壓就醫，下列何者是最有效的單一治療藥品？",
+        options: {
+          A: "furosemide",
+          B: "atenolol",
+          C: "telmisartan",
+          D: "indapamide (Thiazide-like)"
+        },
+        answer: "D"
+      }
+    ];
+
+    // ==========================================
+    // 2. 狀態管理與 LocalStorage
+    // ==========================================
+    const STORAGE_KEY_ANSWERED = 'PHARMA_EXAM_ANSWERED_IDS_V1';
+
+    let answeredIds = new Set();
+    let currentQuizList = [];
+    let currentQuizAnswers = {}; // { questionId: "A" }
+    let currentQuestionIndex = 0;
+    let reviewFilter = 'all';
+
+    // 初始化儲存庫
+    function loadSavedHistory() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_ANSWERED);
+        if (raw) {
+          const arr = JSON.parse(raw);
+          answeredIds = new Set(arr);
+        }
+      } catch (e) {
+        console.error("載入紀錄失敗", e);
+        answeredIds = new Set();
+      }
+      updateStatsUI();
+    }
+
+    function saveAnsweredHistory() {
+      try {
+        localStorage.setItem(STORAGE_KEY_ANSWERED, JSON.stringify([...answeredIds]));
+      } catch (e) {
+        console.error("儲存失敗", e);
+      }
+      updateStatsUI();
+    }
+
+    // ==========================================
+    // 3. UI 統計與進度渲染
+    // ==========================================
+    function updateStatsUI() {
+      const totalCount = QUESTION_BANK.length;
+      // 確保只計算依然存在於題庫內的有效ID
+      const validAnsweredCount = [...answeredIds].filter(id => QUESTION_BANK.some(q => q.id === id)).length;
+      const percent = totalCount > 0 ? Math.round((validAnsweredCount / totalCount) * 100) : 0;
+      const unseenCount = totalCount - validAnsweredCount;
+
+      document.getElementById('stat-percent').textContent = `${percent}%`;
+      document.getElementById('stat-fraction').textContent = `${validAnsweredCount} / ${totalCount} 題`;
+      document.getElementById('stat-bar').style.width = `${percent}%`;
+      document.getElementById('stat-unseen-text').textContent = `剩餘未做：${unseenCount} 題`;
+
+      const badge = document.getElementById('stat-status-badge');
+      if (percent >= 100) {
+        badge.textContent = '🎉 全題庫已完成通關！';
+        badge.className = 'font-semibold text-emerald-600';
+      } else if (percent > 50) {
+        badge.textContent = '進度超前，持續保持！';
+        badge.className = 'font-medium text-indigo-600';
+      } else {
+        badge.textContent = '準備開始測驗';
+        badge.className = 'font-medium text-slate-600';
+      }
+    }
+
+    // ==========================================
+    // 4. 隨機抽選未做題目與開始測驗邏輯
+    // ==========================================
+    function startQuiz(customTargetCount = null) {
+      let selectedVal = customTargetCount;
+      if (!selectedVal) {
+        const checkedRadio = document.querySelector('input[name="quiz_amount"]:checked');
+        selectedVal = checkedRadio ? parseInt(checkedRadio.value, 10) : 30;
+      }
+
+      // 篩選「未做過」的題目
+      let availableQuestions = QUESTION_BANK.filter(q => !answeredIds.has(q.id));
+
+      // 若所有題目都做過了，提示並重新循環重設
+      if (availableQuestions.length === 0) {
+        showToast("太棒了！您已做完全部題目，系統將重新開啟完整題庫！");
+        answeredIds.clear();
+        saveAnsweredHistory();
+        availableQuestions = [...QUESTION_BANK];
+      }
+
+      // 如果未做題目數量小於所選題數，直接以剩餘題數為準
+      const targetCount = Math.min(selectedVal, availableQuestions.length);
+
+      // 洗牌抽題 (Fisher-Yates Shuffle)
+      const shuffled = [...availableQuestions];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
+      currentQuizList = shuffled.slice(0, targetCount);
+      currentQuizAnswers = {};
+      currentQuestionIndex = 0;
+
+      // 切換畫面
+      document.getElementById('screen-setup').classList.add('hidden');
+      document.getElementById('screen-result').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.remove('hidden');
+      document.getElementById('btn-home-nav').classList.remove('hidden');
+
+      renderQuizUI();
+    }
+
+    // 渲染當前題目
+    function renderQuizUI() {
+      const q = currentQuizList[currentQuestionIndex];
+      const total = currentQuizList.length;
+
+      document.getElementById('quiz-current-idx').textContent = currentQuestionIndex + 1;
+      document.getElementById('quiz-total-idx').textContent = total;
+      document.getElementById('quiz-sheet-total').textContent = total;
+      document.getElementById('question-badge').textContent = `Q${currentQuestionIndex + 1}`;
+      document.getElementById('quiz-chapter-tag').textContent = q.chapter;
+      document.getElementById('quiz-source').textContent = q.source;
+      document.getElementById('quiz-question-text').textContent = q.question;
+
+      // 更新已作答數
+      const answeredCount = Object.keys(currentQuizAnswers).length;
+      document.getElementById('answered-count-badge').textContent = answeredCount;
+
+      // 渲染選項
+      const container = document.getElementById('quiz-options-container');
+      container.innerHTML = '';
+
+      const letters = ['A', 'B', 'C', 'D'];
+      const currentSelected = currentQuizAnswers[q.id];
+
+      letters.forEach(letter => {
+        if (!q.options[letter]) return;
+
+        const isChecked = currentSelected === letter;
+        const optBtn = document.createElement('div');
+        optBtn.className = `p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center gap-3.5 select-none ${
+          isChecked 
+            ? 'border-indigo-600 bg-indigo-50/60 shadow-sm' 
+            : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50 bg-white'
+        }`;
+        optBtn.onclick = () => selectOption(letter);
+
+        optBtn.innerHTML = `
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+            isChecked ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'
+          }">
+            ${letter}
+          </div>
+          <div class="flex-1 text-sm md:text-base font-medium ${
+            isChecked ? 'text-indigo-950 font-semibold' : 'text-slate-800'
+          }">
+            ${q.options[letter]}
+          </div>
+        `;
+        container.appendChild(optBtn);
+      });
+
+      // 導航按鈕狀態
+      const btnPrev = document.getElementById('btn-prev-q');
+      const btnNext = document.getElementById('btn-next-q');
+      const btnFinish = document.getElementById('btn-finish-q');
+
+      btnPrev.disabled = currentQuestionIndex === 0;
+      btnPrev.classList.toggle('opacity-40', currentQuestionIndex === 0);
+      btnPrev.classList.toggle('cursor-not-allowed', currentQuestionIndex === 0);
+
+      if (currentQuestionIndex === total - 1) {
+        btnNext.classList.add('hidden');
+        btnFinish.classList.remove('hidden');
+      } else {
+        btnNext.classList.remove('hidden');
+        btnFinish.classList.add('hidden');
+      }
+    }
+
+    function selectOption(letter) {
+      const q = currentQuizList[currentQuestionIndex];
+      currentQuizAnswers[q.id] = letter;
+      renderQuizUI();
+      renderSheetGrid();
+    }
+
+    function navigateQuiz(step) {
+      const nextIndex = currentQuestionIndex + step;
+      if (nextIndex >= 0 && nextIndex < currentQuizList.length) {
+        currentQuestionIndex = nextIndex;
+        renderQuizUI();
+      }
+    }
+
+    // ==========================================
+    // 5. 答題卡 Modal 邏輯
+    // ==========================================
+    function toggleSheetModal() {
+      const modal = document.getElementById('modal-sheet');
+      modal.classList.toggle('hidden');
+      if (!modal.classList.contains('hidden')) {
+        renderSheetGrid();
+      }
+    }
+
+    function renderSheetGrid() {
+      const grid = document.getElementById('sheet-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      currentQuizList.forEach((q, idx) => {
+        const isAnswered = Boolean(currentQuizAnswers[q.id]);
+        const isCurrent = idx === currentQuestionIndex;
+
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = `h-10 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+          isCurrent
+            ? 'ring-2 ring-indigo-600 bg-white text-indigo-700 shadow-sm'
+            : isAnswered
+            ? 'bg-indigo-600 text-white shadow-sm'
+            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+        }`;
+        cell.textContent = idx + 1;
+        cell.onclick = () => {
+          currentQuestionIndex = idx;
+          renderQuizUI();
+          toggleSheetModal();
+        };
+        grid.appendChild(cell);
+      });
+    }
+
+    // ==========================================
+    // 6. 交卷、結算、與做題紀錄持久化
+    // ==========================================
+    function confirmSubmitQuiz() {
+      const total = currentQuizList.length;
+      const answeredCount = Object.keys(currentQuizAnswers).length;
+      const unansweredCount = total - answeredCount;
+
+      let msg = '確定要交卷結算成績嗎？';
+      if (unansweredCount > 0) {
+        msg = `您還有 ${unansweredCount} 題尚未作答，確定要交卷結算成績嗎？`;
+      }
+
+      if (window.confirm(msg)) {
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz() {
+      // 1. 登記「有做過的題目」到 set 中
+      currentQuizList.forEach(q => {
+        answeredIds.add(q.id);
+      });
+      saveAnsweredHistory();
+
+      // 2. 計算得分
+      let correctCount = 0;
+      currentQuizList.forEach(q => {
+        if (currentQuizAnswers[q.id] === q.answer) {
+          correctCount++;
+        }
+      });
+      const wrongCount = currentQuizList.length - correctCount;
+      const rate = currentQuizList.length > 0 ? Math.round((correctCount / currentQuizList.length) * 100) : 0;
+
+      // 3. 填入結算資料
+      document.getElementById('res-total').textContent = currentQuizList.length;
+      document.getElementById('res-correct').textContent = correctCount;
+      document.getElementById('res-wrong').textContent = wrongCount;
+      document.getElementById('res-rate').textContent = `${rate}%`;
+
+      const totalBank = QUESTION_BANK.length;
+      const validAnsweredCount = [...answeredIds].filter(id => QUESTION_BANK.some(q => q.id === id)).length;
+      const coverage = totalBank > 0 ? Math.round((validAnsweredCount / totalBank) * 100) : 0;
+      document.getElementById('res-cumulative-text').textContent = `${validAnsweredCount} / ${totalBank} 題 (${coverage}%)`;
+
+      // 4. 切換到結果畫面
+      document.getElementById('screen-quiz').classList.add('hidden');
+      document.getElementById('screen-result').classList.remove('hidden');
+
+      // 5. 渲染詳細檢討列表
+      renderReviewList();
+    }
+
+    // ==========================================
+    // 7. 錯題檢討與篩選器
+    // ==========================================
+    function filterReview(mode) {
+      reviewFilter = mode;
+      ['all', 'wrong', 'correct'].forEach(m => {
+        const btn = document.getElementById(`filter-${m}`);
+        if (m === mode) {
+          btn.className = 'px-3 py-1.5 rounded-lg bg-white shadow-sm text-indigo-600 font-bold';
+        } else {
+          btn.className = 'px-3 py-1.5 rounded-lg hover:text-slate-900 font-medium';
+        }
+      });
+      renderReviewList();
+    }
+
+    function renderReviewList() {
+      const container = document.getElementById('review-list-container');
+      container.innerHTML = '';
+
+      let correctTotal = 0;
+      let wrongTotal = 0;
+
+      currentQuizList.forEach(q => {
+        const userChoice = currentQuizAnswers[q.id];
+        if (userChoice === q.answer) {
+          correctTotal++;
+        } else {
+          wrongTotal++;
+        }
+      });
+
+      document.getElementById('count-rev-all').textContent = currentQuizList.length;
+      document.getElementById('count-rev-wrong').textContent = wrongTotal;
+      document.getElementById('count-rev-correct').textContent = correctTotal;
+
+      const filtered = currentQuizList.filter(q => {
+        const isRight = currentQuizAnswers[q.id] === q.answer;
+        if (reviewFilter === 'wrong') return !isRight;
+        if (reviewFilter === 'correct') return isRight;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-slate-400 bg-slate-50 rounded-xl">
+            <i class="ph ph-sparkle text-3xl text-slate-300 mb-2"></i>
+            <p class="text-sm">沒有符合此條件的題目！</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach((q) => {
+        const realIdx = currentQuizList.findIndex(item => item.id === q.id) + 1;
+        const userChoice = currentQuizAnswers[q.id];
+        const isRight = userChoice === q.answer;
+
+        const card = document.createElement('div');
+        card.className = `p-5 rounded-2xl border ${
+          isRight ? 'border-emerald-200 bg-emerald-50/20' : 'border-rose-200 bg-rose-50/20'
+        } space-y-3`;
+
+        let optionsHtml = '';
+        ['A', 'B', 'C', 'D'].forEach(letter => {
+          if (!q.options[letter]) return;
+          const isCorrectAnswer = letter === q.answer;
+          const isUserPick = letter === userChoice;
+
+          let badgeClass = 'border-slate-200 bg-white text-slate-700';
+          let indicator = '';
+
+          if (isCorrectAnswer) {
+            badgeClass = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold';
+            indicator = '<span class="ml-auto text-xs px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">正式答案</span>';
+          } else if (isUserPick && !isRight) {
+            badgeClass = 'border-rose-500 bg-rose-50 text-rose-800 line-through';
+            indicator = '<span class="ml-auto text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">您的選擇 (錯誤)</span>';
+          }
+
+          optionsHtml += `
+            <div class="p-3 rounded-xl border text-sm flex items-center gap-2.5 ${badgeClass}">
+              <span class="w-6 h-6 rounded-md flex items-center justify-center font-bold text-xs ${
+                isCorrectAnswer ? 'bg-emerald-600 text-white' : isUserPick ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-600'
+              }">${letter}</span>
+              <span class="flex-1">${q.options[letter]}</span>
+              ${indicator}
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold px-2.5 py-1 rounded-md ${
+                isRight ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+              }">第 ${realIdx} 題 · ${isRight ? '答對' : '答錯'}</span>
+              <span class="text-xs text-slate-400">${q.chapter}</span>
+            </div>
+            <span class="text-xs font-medium text-slate-400">${q.source}</span>
+          </div>
+
+          <h4 class="font-bold text-slate-800 text-sm md:text-base leading-relaxed">${q.question}</h4>
+
+          <div class="space-y-2 pt-1">
+            ${optionsHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // ==========================================
+    // 8. 導航與重設模組
+    // ==========================================
+    function continueNextQuiz() {
+      // 根據剩餘未做題數，自動開始新一輪
+      startQuiz();
+    }
+
+    function goHome() {
+      document.getElementById('screen-quiz').classList.add('hidden');
+      document.getElementById('screen-result').classList.add('hidden');
+      document.getElementById('screen-setup').classList.remove('hidden');
+      document.getElementById('btn-home-nav').classList.add('hidden');
+      updateStatsUI();
+    }
+
+    function goHomeWithConfirm() {
+      if (window.confirm('測驗尚未完成，確定要返回首頁嗎？當前作答將不會計入成績。')) {
+        goHome();
+      }
+    }
+
+    function openResetModal() {
+      document.getElementById('modal-reset').classList.remove('hidden');
+    }
+
+    function closeResetModal() {
+      document.getElementById('modal-reset').classList.add('hidden');
+    }
+
+    function executeResetHistory() {
+      answeredIds.clear();
+      saveAnsweredHistory();
+      closeResetModal();
+      showToast('已重設所有做題歷史，進度已恢復為 0%！');
+      if (!document.getElementById('screen-quiz').classList.contains('hidden')) {
+        goHome();
+      }
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      const textElem = document.getElementById('toast-text');
+      if (!toast || !textElem) return;
+      textElem.textContent = text;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    // 視窗載入即初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedHistory();
+    });
+  </script>
+</body>
+</html>
